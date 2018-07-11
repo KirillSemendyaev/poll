@@ -11,7 +11,7 @@
 int main(int argc, char **argv)
 {
 	if (argc != 4) {
-		printf("Usage: UDP_CLIENT [address] [port] [msg_type] (0 for \"Hello!\", 1 for \"Quit\")\n");
+		printf("Usage: TCP_CLIENT [address] [port] [msg_type] (0 for \"Hello!\", 1 for \"Quit\")\n");
 		return -2;
 	}
 	int socket_fd, ret;
@@ -20,8 +20,8 @@ int main(int argc, char **argv)
 	socklen_t target_size;
 
 	char buf[16] = {0};
-
-	socket_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	len = sizeof(buf);
+	socket_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (socket_fd == -1) {
 		perror("socket");
 		return -1;
@@ -32,26 +32,28 @@ int main(int argc, char **argv)
 	target.sin_port = htons(atoi(argv[2]));
 	target.sin_addr.s_addr = inet_addr(argv[1]);
 	target_size = sizeof(target);
-	len = sizeof(buf);
 	if (atoi(argv[3])) {
 		sprintf(buf, "Quit");
 	} else {
 		sprintf(buf, "Hello!");
 	}
-
 	printf("%s\n", buf);
 
-
-	ret = sendto(socket_fd, buf, len, MSG_CONFIRM, (struct sockaddr*)&target, target_size);
+	ret = connect(socket_fd, (struct sockaddr*)&target, target_size);
 	if (ret == -1) {
-		perror("send");
+		perror("connect");
 		return -3;
 	}
+	ret = send(socket_fd, buf, 16, 0);
+	if (ret < 1) {
+		perror("send");
+		return -4;
+	}
 
-	ret = recvfrom(socket_fd, buf, len, 0, (struct sockaddr*)&target, &target_size);
-	if (ret == -1) {
+	ret = recv(socket_fd, buf, 16, 0);
+	if (ret < 1) {
 		perror("recv");
-		return -3;
+		return -5;
 	}
 	printf("%s\n", buf);
 

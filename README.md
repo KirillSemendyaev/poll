@@ -1,2 +1,2 @@
 # poll
-poll-server
+Simple multi-protocol poll-server
